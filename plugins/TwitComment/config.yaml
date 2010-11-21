@@ -1,0 +1,53 @@
+# TwitComment
+#
+# Release 0.01 (Nov 01, 2010)
+# Release 0.02 (Nov 03, 2010) change php file.
+# Release 0.03 (Nov 05, 2010) fix bug.
+#
+# Copyright (c) 2004-2010 Yujiro Araki
+
+id: TwitComment
+name: TwitComment
+author_name: Yujiro Araki
+author_url: http://www.movabletype.org/
+author_link: http://www.koikikukan.com/
+plugin_link: http://www.koikikukan.com/archives/2010/11/01-015555.php
+doc_link: http://www.koikikukan.com/archives/2010/11/01-015555.php
+description: <__trans phrase="Allows commenters to sign in to Movable Type using their own twitter username and password via OAuth.">
+version: 0.03
+l10n_lexicon:
+    ja: l10n_ja.yaml
+blog_config_template: config.tmpl
+settings:
+    TwitComment_consumerkey:
+        Default: ''
+        Scope: blog
+    TwitComment_consumerkey_secret:
+        Default: ''
+        Scope: blog
+applications:
+    comments:
+        methods:
+            oauth_verified: $TwitComment::TwitComment::App::handle_sign_in
+commenter_authenticators:
+    TwitComment:
+        label: Twitter
+        class: TwitComment::Auth::Twitter
+        login_form: |
+            <form method="post" action="<mt:var name="script_url">">
+                <input type="hidden" name="__mode" value="login_external" />
+                <input type="hidden" name="openid_url" value="<mt:var name="url">" />
+                <input type="hidden" name="blog_id" value="<mt:var name="blog_id">" />
+                <input type="hidden" name="entry_id" value="<mt:var name="entry_id">" />
+                <input type="hidden" name="static" value="<mt:var name="static" escape="html">" />
+                <input type="hidden" name="key" value="TwitComment" />
+                <fieldset>
+                    <div class="actions-bar actions-bar-login">
+                        <input type="image" src="<mt:var name="static_uri">plugins/TwitComment/images/twitter_logo.png" />
+                    </div>
+                </fieldset>
+            </form>
+        condition: $TwitComment::TwitComment::App::oauth_commenter_condition
+        login_form_params: $TwitComment::TwitComment::App::commenter_auth_params
+        logo: plugins/TwitComment/images/twitter_logo.png
+        logo_small: plugins/TwitComment/images/signin_twitter_small.png
