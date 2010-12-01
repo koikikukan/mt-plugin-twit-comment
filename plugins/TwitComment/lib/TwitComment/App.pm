@@ -2,13 +2,15 @@ package TwitComment::App;
 
 use strict;
 
-use CGI;
 use HTTP::Request::Common;
 use LWP::UserAgent;
 use Digest::SHA1;
 use Net::OAuth;
 use XML::Simple;
 use MT::Util qw( ts2epoch decode_url );
+# Net::OAuth defaults to OAuth 1.0 spec compliance, and supports OAuth 1.0 Rev A with an optional switch:
+# http://search.cpan.org/dist/Net-OAuth/lib/Net/OAuth.pm#OAUTH_1.0A
+$Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
 sub handle_sign_in {
     my $app = shift;
@@ -19,11 +21,14 @@ sub handle_sign_in {
     my $oauth_verifier = $q->param('oauth_verifier');
     my $blog_id = $q->param('blog_id');
 
-    my $c = CGI->new;
-    my %cookies = $c->cookie('TwitComment');
+    my $c = $app->cookies();
+    my %cookies = $c->{ 'TwitComment' }->value;
     my $request_token = $cookies{'token'};
     my $request_token_secret = $cookies{'token_secret'};
     my $static = $cookies{'static'};
+
+    # Request token verifier.
+    return $app->error('Request tokens dont match.',$blog_id) if($request_token ne $oauth_token);
 
     $app->bake_cookie(
         -name    => 'TwitComment',
@@ -66,9 +71,10 @@ sub handle_sign_in {
 
     my $response = Net::OAuth->response('access token')->from_post_body($res->content);
 
-    my $access_token = $response->token;
-    my $access_token_secret = $response->token_secret;
-    my $user_id = $response->extra_params->{'user_id'};
+    # These values are unnecessary in the current version.
+    # my $access_token = $response->token;
+    # my $access_token_secret = $response->token_secret;
+    # my $user_id = $response->extra_params->{'user_id'};
     my $screen_name = $response->extra_params->{'screen_name'};
 
     # MT::Auth::OpenID::handle_sign_in
@@ -123,7 +129,6 @@ sub handle_sign_in {
 
     unless ($session) {
         $app->error($app->errstr() || $app->translate("Couldn't save the session"));
-#        return 0;
         return $app->redirect(decode_url($static));
     }
 
@@ -133,7 +138,7 @@ sub handle_sign_in {
         my $mtime = $fmgr->file_mod_time($userpic->file_path());
         if ( $mtime > time - $INTERVAL ) {
             # newer than 7 days ago, don't download the userpic
-#            return $app->redirect(decode_url($static).'#_login');
+            return $app->redirect(decode_url($static).'#_login');
         }
     }
     my $ua = LWP::UserAgent->new;

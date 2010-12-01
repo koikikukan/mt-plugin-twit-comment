@@ -6,6 +6,9 @@ use HTTP::Request::Common;
 use LWP::UserAgent;
 use Digest::SHA1;
 use Net::OAuth;
+# Net::OAuth defaults to OAuth 1.0 spec compliance, and supports OAuth 1.0 Rev A with an optional switch:
+# http://search.cpan.org/dist/Net-OAuth/lib/Net/OAuth.pm#OAUTH_1.0A
+$Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
 sub login {
     my $class = shift;
